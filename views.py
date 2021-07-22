@@ -7,23 +7,23 @@ from django.views import View
 from django.views.generic import ListView, DetailView, CreateView, UpdateView
 
 
-def index(request):
-    context = {
-        'posts': Post.objects.all()
-    }
-    return render(request, 'posts/index.html', context=context)
+# def index(request):
+#     context = {
+#         'posts': Post.objects.all()
+#     }
+#     return render(request, 'posts/index.html', context=context)
 
 
-def create_post(request):
-    if request.method == 'POST':
-        form = PostForm(request.POST)
-        if form.is_valid():
-            p = Post(title=form.cleaned_data['title'], content=form.cleaned_data['content'])
-            p.save()
-            return redirect('/posts')
-        else:
-            return render(request, 'posts/create_post.html', context={'form': form})
-    return render(request, 'posts/create_post.html')
+# def create_post(request):
+#     if request.method == 'POST':
+#         form = PostForm(request.POST)
+#         if form.is_valid():
+#             p = Post(title=form.cleaned_data['title'], content=form.cleaned_data['content'])
+#             p.save()
+#             return redirect('/posts')
+#         else:
+#             return render(request, 'posts/create_post.html', context={'form': form})
+#     return render(request, 'posts/create_post.html')
 
 
 class CreatePostView(View):
@@ -34,7 +34,9 @@ class CreatePostView(View):
     def post(self, request):
         form = PostForm(request.POST)
         if form.is_valid():
-            p = Post(title=form.cleaned_data['title'], content=form.cleaned_data['content'])
+            p = Post(title=form.cleaned_data['title'],
+                     content=form.cleaned_data['content'],
+                     status=form.cleaned_data['status'])
             p.save()
             return redirect('/posts')
         else:
@@ -57,13 +59,17 @@ class PostListView(ListView):
     context_object_name = 'posts'
 
     def get_queryset(self):
-        return Post.objects.prefetch_related('categories', 'categories__category')
+        return Post.objects.published()
 
 
+class PostForm(forms.ModelForm):
+    #title = forms.CharField(label='', min_length=2)
+    #content = forms.CharField(max_length=100)
+    #status = forms.CharField(max_length=2)
 
-class PostForm(forms.Form):
-    title = forms.CharField(label='', min_length=2)
-    content = forms.CharField(max_length=100)
+    class Meta:
+        model = Post
+        fields = ['title', 'content', 'status']
 
     def clean_title(self):
         title = self.cleaned_data['title']
